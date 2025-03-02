@@ -1,0 +1,18 @@
+Last Name: Godwin
+First Name: Ablao
+Age: 21
+Contact Number: 092222222
+Course: BSITBA
+------------------------------
+Last Name: Weng
+First Name: tot
+Age: 21
+Contact Number: 09789456123
+Course: BSITBA
+------------------------------
+Last Name: Farah
+First Name: Kenawy
+Age: 20
+Contact Number: 09789456321
+Course: BSITBA
+------------------------------
