@@ -1,164 +1,148 @@
 import csv
+import os
 
-# Global variables
+# Global variable for records
 records = []
-filename = "students.csv"  # Default filename
+filename = "students.csv"
 
-# Load records from CSV file
-def open_file():
+def load_records():
+    """Load student records from a CSV file or create it if missing."""
     global records
     try:
-        with open(filename, "r") as file:
+        with open(filename, "r", newline="") as file:
             reader = csv.reader(file)
-            next(reader)  # Skip the header
-            records = [
-                {
-                    "id": row[0],
-                    "name": (row[1], row[2]),
-                    "class_standing": float(row[3]),
-                    "major_exam": float(row[4]),
-                }
-                for row in reader
-            ]
-        print(f"File '{filename}' opened successfully.")
+            next(reader, None)  # Skip header
+            records = [(row[0], (row[1], row[2]), float(row[3]), float(row[4])) for row in reader]
+        print("Records loaded successfully.")
     except FileNotFoundError:
-        print("No existing file found. Starting with an empty record list.")
+        print("No existing file found. Creating 'students.csv'...")
+        with open(filename, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["ID", "First Name", "Last Name", "Class Standing", "Major Exam"])
+        records = []
 
-# Save records to CSV file
-def save_file():
-    global filename
-    if not records:
-        print("No records to save!")
-        return
-
+def save_records():
+    """Save records to the default CSV file."""
     with open(filename, "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["ID", "First Name", "Last Name", "Class Standing", "Major Exam"])
         for record in records:
-            writer.writerow([record["id"], record["name"][0], record["name"][1], record["class_standing"], record["major_exam"]])
+            writer.writerow([record[0], record[1][0], record[1][1], record[2], record[3]])
+    print("Records saved successfully.")
 
-    print(f"File '{filename}' saved successfully.")
+def save_as(new_filename):
+    """Save records to a new file."""
+    with open(new_filename, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["ID", "First Name", "Last Name", "Class Standing", "Major Exam"])
+        for record in records:
+            writer.writerow([record[0], record[1][0], record[1][1], record[2], record[3]])
+    print(f"Records saved as {new_filename} successfully.")
 
-# Save As function to save records to a new file
-def save_as_file(new_filename):
-    global filename
-    filename = new_filename
-    save_file()
-
-# Show all student records
-def show_all_records():
-    if not records:
-        print("No records available.")
-        return
+def show_records():
+    """Display all student records."""
+    print("\nAll Student Records:")
+    print("ID       | Name               | Class Standing | Major Exam")
+    print("---------------------------------------------------------")
     for record in records:
-        print(f"ID: {record['id']}, Name: {record['name'][0]} {record['name'][1]}, Class Standing: {record['class_standing']}, Major Exam: {record['major_exam']}")
+        print(f"{record[0]:<8} | {record[1][0]} {record[1][1]:<15} | {record[2]:<14} | {record[3]}")
 
-# Order by last name
 def order_by_last_name():
-    sorted_records = sorted(records, key=lambda x: x["name"][1])
+    """Sort records by last name."""
+    sorted_records = sorted(records, key=lambda x: x[1][1])
     for record in sorted_records:
-        print(f"ID: {record['id']}, Name: {record['name'][0]} {record['name'][1]}")
+        print(record)
 
-# Order by grade (60% Class Standing + 40% Major Exam)
 def order_by_grade():
-    sorted_records = sorted(records, key=lambda x: (x["class_standing"] * 0.6 + x["major_exam"] * 0.4), reverse=True)
+    """Sort records by weighted grade (60% class standing, 40% major exam)."""
+    sorted_records = sorted(records, key=lambda x: 0.6 * x[2] + 0.4 * x[3], reverse=True)
     for record in sorted_records:
-        final_grade = (record["class_standing"] * 0.6 + record["major_exam"] * 0.4)
-        print(f"ID: {record['id']}, Name: {record['name'][0]} {record['name'][1]}, Final Grade: {final_grade:.2f}")
+        print(record)
 
-# Show student record by ID
-def show_student_record():
-    student_id = input("Enter Student ID: ")
+def show_student_record(student_id):
+    """Find and display a student record by ID."""
     for record in records:
-        if record["id"] == student_id:
-            print(f"ID: {record['id']}, Name: {record['name'][0]} {record['name'][1]}, Class Standing: {record['class_standing']}, Major Exam: {record['major_exam']}")
+        if record[0] == student_id:
+            print("\nStudent Found:")
+            print(f"ID: {record[0]}\nName: {record[1][0]} {record[1][1]}\nClass Standing: {record[2]}\nMajor Exam: {record[3]}")
             return
-    print("Student record not found.")
+    print("Student not found.")
 
-# Add a student record
 def add_record():
+    """Add a new student record."""
     student_id = input("Enter Student ID (6 digits): ")
     first_name = input("Enter First Name: ")
     last_name = input("Enter Last Name: ")
     class_standing = float(input("Enter Class Standing Grade: "))
     major_exam = float(input("Enter Major Exam Grade: "))
+    records.append((student_id, (first_name, last_name), class_standing, major_exam))
+    print("Student record added successfully.")
 
-    record = {
-        "id": student_id,
-        "name": (first_name, last_name),
-        "class_standing": class_standing,
-        "major_exam": major_exam
-    }
-
-    records.append(record)
-    print("Record added successfully!")
-
-# Edit a student record
 def edit_record():
+    """Edit an existing student record."""
     student_id = input("Enter Student ID to edit: ")
-    for record in records:
-        if record["id"] == student_id:
-            print("Editing record:", record)
-            record["name"] = (input("Enter New First Name: "), input("Enter New Last Name: "))
-            record["class_standing"] = float(input("Enter New Class Standing: "))
-            record["major_exam"] = float(input("Enter New Major Exam Grade: "))
-            print("Record updated successfully!")
+    for i, record in enumerate(records):
+        if record[0] == student_id:
+            first_name = input("Enter New First Name: ")
+            last_name = input("Enter New Last Name: ")
+            class_standing = float(input("Enter New Class Standing Grade: "))
+            major_exam = float(input("Enter New Major Exam Grade: "))
+            records[i] = (student_id, (first_name, last_name), class_standing, major_exam)
+            print("Record updated successfully.")
             return
-    print("Student record not found.")
+    print("Student ID not found.")
 
-# Delete a student record
 def delete_record():
+    """Delete a student record by ID."""
     student_id = input("Enter Student ID to delete: ")
     global records
-    records = [record for record in records if record["id"] != student_id]
-    print("Record deleted successfully!")
+    records = [record for record in records if record[0] != student_id]
+    print("Record deleted successfully.")
 
-
-# Main Menu
-def main_menu():
+def menu():
+    """Display menu and handle user choices."""
+    load_records()
     while True:
-        print("\nSTUDENT RECORD MANAGEMENT SYSTEM")
+        print("\nSTUDENT RECORD MANAGEMENT")
         print("1. Open File")
         print("2. Save File")
         print("3. Save As File")
-        print("4. Show All Student Records")
+        print("4. Show All Students Record")
         print("5. Order by Last Name")
         print("6. Order by Grade")
         print("7. Show Student Record")
         print("8. Add Record")
         print("9. Edit Record")
         print("10. Delete Record")
-        print("11. Exit")
-
-        choice = input("Enter your choice: ")
-
+        print("0. Exit")
+        choice = input("Enter choice: ")
         if choice == "1":
-            open_file()
+            load_records()
         elif choice == "2":
-            save_file()
+            save_records()
         elif choice == "3":
             new_filename = input("Enter new filename: ")
-            save_as_file(new_filename)
+            save_as(new_filename)
         elif choice == "4":
-            show_all_records()
+            show_records()
         elif choice == "5":
             order_by_last_name()
         elif choice == "6":
             order_by_grade()
         elif choice == "7":
-            show_student_record()
+            student_id = input("Enter Student ID: ")
+            show_student_record(student_id)
         elif choice == "8":
             add_record()
         elif choice == "9":
             edit_record()
         elif choice == "10":
             delete_record()
-        elif choice == "11":
-            print("Exiting program...")
+        elif choice == "0":
+            print("Exiting...\n")
             break
         else:
-            print("Invalid choice. Please try again.")
+            print("Invalid choice. Try again.")
 
-# Run the program
-if __name__ == "__main__":
-    main_menu()
+# Run the menu
+menu()
